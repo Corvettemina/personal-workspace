@@ -56,6 +56,15 @@ const BINGO_WORDS = [
   "All hands",
 ];
 
+function shuffleArray(items) {
+  const array = [...items];
+  for (let index = array.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [array[index], array[swapIndex]] = [array[swapIndex], array[index]];
+  }
+  return array;
+}
+
 function readJson(key, fallback) {
   const raw = localStorage.getItem(key);
   if (!raw) {
@@ -165,18 +174,18 @@ export async function loginUser(username, password) {
 }
 
 function createBoard() {
-  const pool = [...BINGO_WORDS];
-  if (pool.length < 24) {
+  if (BINGO_WORDS.length < 24) {
     throw new Error("Not enough words to build a bingo board.");
   }
+  const pool = shuffleArray(BINGO_WORDS).slice(0, 24);
   const cells = [];
+  let wordIndex = 0;
   for (let index = 0; index < 25; index += 1) {
     if (index === 12) {
       cells.push({ text: "FREE", marked: true });
     } else {
-      const choiceIndex = Math.floor(Math.random() * pool.length);
-      const [choice] = pool.splice(choiceIndex, 1);
-      cells.push({ text: choice, marked: false });
+      cells.push({ text: pool[wordIndex], marked: false });
+      wordIndex += 1;
     }
   }
   return {

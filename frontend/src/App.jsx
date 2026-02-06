@@ -143,7 +143,7 @@ function App() {
     if (!user) {
       return;
     }
-    const confirmed = window.confirm("Reset your board and get new prompts?");
+    const confirmed = window.confirm("Randomize your board and get new prompts?");
     if (!confirmed) {
       return;
     }
@@ -227,7 +227,7 @@ function App() {
               </div>
               <div className="board-actions">
                 <button className="secondary" type="button" onClick={handleReset}>
-                  Reset board
+                  Randomize board
                 </button>
               </div>
             </div>
