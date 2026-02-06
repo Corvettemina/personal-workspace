@@ -56,10 +56,29 @@ const BINGO_WORDS = [
   "All hands",
 ];
 
-function shuffleArray(items) {
+function hashStringToSeed(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function mulberry32(seed) {
+  let state = seed >>> 0;
+  return function random() {
+    state += 0x6d2b79f5;
+    let result = Math.imul(state ^ (state >>> 15), state | 1);
+    result ^= result + Math.imul(result ^ (result >>> 7), result | 61);
+    return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleArray(items, rng = Math.random) {
   const array = [...items];
   for (let index = array.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
+    const swapIndex = Math.floor(rng() * (index + 1));
     [array[index], array[swapIndex]] = [array[swapIndex], array[index]];
   }
   return array;
@@ -173,11 +192,16 @@ export async function loginUser(username, password) {
   return normalized;
 }
 
-function createBoard() {
+function createBoard(username) {
+  if (!username) {
+    throw new Error("Username is required to build a board.");
+  }
   if (BINGO_WORDS.length < 24) {
     throw new Error("Not enough words to build a bingo board.");
   }
-  const pool = shuffleArray(BINGO_WORDS).slice(0, 24);
+  const seed = hashStringToSeed(`bingo:${username}`);
+  const rng = mulberry32(seed);
+  const pool = shuffleArray(BINGO_WORDS, rng).slice(0, 24);
   const cells = [];
   let wordIndex = 0;
   for (let index = 0; index < 25; index += 1) {
@@ -200,7 +224,7 @@ function ensureBoard(username) {
   if (boards[username]) {
     return boards[username];
   }
-  const board = createBoard();
+  const board = createBoard(username);
   boards[username] = board;
   saveBoards(boards);
   return board;
@@ -221,7 +245,21 @@ export function saveBoard(username, board) {
 
 export function resetBoard(username) {
   const boards = getBoards();
-  const board = createBoard();
+  const existing = boards[username];
+  if (existing?.cells?.length === 25) {
+    const next = {
+      ...existing,
+      cells: existing.cells.map((cell, index) => ({
+        ...cell,
+        marked: index === 12 ? true : false,
+      })),
+      updatedAt: new Date().toISOString(),
+    };
+    boards[username] = next;
+    saveBoards(boards);
+    return next;
+  }
+  const board = createBoard(username);
   boards[username] = board;
   saveBoards(boards);
   return board;
