@@ -52,6 +52,7 @@ function App() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [user, setUser] = useState(null);
   const [board, setBoard] = useState(null);
+  const [view, setView] = useState("board");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -60,6 +61,7 @@ function App() {
     if (current) {
       setUser(current);
       setBoard(getBoard(current));
+      setView("board");
     }
   }, []);
 
@@ -71,6 +73,13 @@ function App() {
   }, [board]);
 
   const hasBingo = useMemo(() => (board ? checkBingo(board.cells) : false), [board]);
+
+  const lastUpdated = useMemo(() => {
+    if (!board?.updatedAt) {
+      return "Not yet";
+    }
+    return new Date(board.updatedAt).toLocaleString();
+  }, [board]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -90,6 +99,7 @@ function App() {
       const current = getCurrentUser();
       setUser(current);
       setBoard(getBoard(current));
+      setView("board");
       setForm(EMPTY_FORM);
     } catch (err) {
       setError(err.message || "Something went wrong.");
@@ -104,6 +114,7 @@ function App() {
     setBoard(null);
     setForm(EMPTY_FORM);
     setMode("login");
+    setView("board");
     setError("");
   };
 
@@ -115,8 +126,10 @@ function App() {
       return;
     }
     setBoard((prev) => {
+      const updatedAt = new Date().toISOString();
       const next = {
         ...prev,
+        updatedAt,
         cells: prev.cells.map((cell, idx) =>
           idx === index ? { ...cell, marked: !cell.marked } : cell,
         ),
@@ -209,10 +222,8 @@ function App() {
           <section className="card board-card">
             <div className="board-header">
               <div>
-                <h2>Your Bingo Board</h2>
-                <p className="subtitle">
-                  Marked {markedCount} of {board?.cells.length ?? 0} squares
-                </p>
+                <h2>Welcome, {user}</h2>
+                <p className="subtitle">Your board and stats are private to you.</p>
               </div>
               <div className="board-actions">
                 <button className="secondary" type="button" onClick={handleReset}>
@@ -220,21 +231,68 @@ function App() {
                 </button>
               </div>
             </div>
-            {hasBingo ? <div className="bingo-banner">Bingo!</div> : null}
-            <div className="board-grid">
-              {board?.cells.map((cell, index) => (
-                <button
-                  key={`${cell.text}-${index}`}
-                  type="button"
-                  className={`cell ${cell.marked ? "marked" : ""} ${
-                    index === 12 ? "free" : ""
-                  }`}
-                  onClick={() => handleToggle(index)}
-                >
-                  <span>{cell.text}</span>
-                </button>
-              ))}
+            <div className="view-tabs">
+              <button
+                type="button"
+                className={view === "board" ? "active" : ""}
+                onClick={() => setView("board")}
+              >
+                My Board
+              </button>
+              <button
+                type="button"
+                className={view === "stats" ? "active" : ""}
+                onClick={() => setView("stats")}
+              >
+                My Stats
+              </button>
             </div>
+            {view === "board" ? (
+              <>
+                <div className="board-meta">
+                  <p className="subtitle">
+                    Marked {markedCount} of {board?.cells.length ?? 0} squares
+                  </p>
+                  <p className="subtitle">Last updated: {lastUpdated}</p>
+                </div>
+                {hasBingo ? <div className="bingo-banner">Bingo!</div> : null}
+                <div className="board-grid">
+                  {board?.cells.map((cell, index) => (
+                    <button
+                      key={`${cell.text}-${index}`}
+                      type="button"
+                      className={`cell ${cell.marked ? "marked" : ""} ${
+                        index === 12 ? "free" : ""
+                      }`}
+                      onClick={() => handleToggle(index)}
+                    >
+                      <span>{cell.text}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <p className="stat-label">Signed-in user</p>
+                  <p className="stat-value">{user}</p>
+                </div>
+                <div className="stat-card">
+                  <p className="stat-label">Squares marked</p>
+                  <p className="stat-value">
+                    {markedCount} / {board?.cells.length ?? 0}
+                  </p>
+                </div>
+                <div className="stat-card">
+                  <p className="stat-label">Last updated</p>
+                  <p className="stat-value">{lastUpdated}</p>
+                </div>
+                <div className="stat-card">
+                  <p className="stat-label">Bingo status</p>
+                  <p className="stat-value">{hasBingo ? "Bingo!" : "No bingo yet"}</p>
+                </div>
+              </div>
+            )}
           </section>
         )}
       </main>

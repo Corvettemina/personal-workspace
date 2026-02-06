@@ -17,5 +17,6 @@ Open the URL printed by Vite (typically `http://localhost:5173`).
 ## Notes
 
 - Login data and boards live only in your browser.
+- Each username gets its own private board and stats view on this device.
 - Clearing site data or switching browsers will reset everything.
 - The password hashing is client-side and intended for demo use only.

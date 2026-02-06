@@ -171,6 +171,40 @@ input {
   gap: 12px;
 }
 
+.view-tabs {
+  display: flex;
+  gap: 4px;
+  background: #eff2f7;
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+
+.view-tabs button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #55607a;
+}
+
+.view-tabs button.active {
+  background: #ffffff;
+  color: #1f2a44;
+  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+}
+
+.board-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
 .bingo-banner {
   background: #1f2a44;
   color: #ffffff;
@@ -225,6 +259,32 @@ input {
   background: #f6b94c;
   border-color: #f6b94c;
   color: #5a3300;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  background: #f8f9fc;
+  border: 1px solid #d7dcea;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.stat-label {
+  margin: 0 0 6px;
+  color: #5f6b85;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
 @media (max-width: 720px) {
