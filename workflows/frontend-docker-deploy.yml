@@ -1,0 +1,61 @@
+name: Frontend Docker Build and Remote Deploy
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-transfer-and-run:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      IMAGE_NAME: frontend_bingo:latest
+      TAR_NAME: frontend_bingo.tar
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build frontend image
+        run: docker build --file frontend/Dockerfile --tag "$IMAGE_NAME" frontend
+
+      - name: Save image as tar archive
+        run: docker save --output "$TAR_NAME" "$IMAGE_NAME"
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install --yes sshpass
+
+      - name: Configure SSH known hosts
+        env:
+          SSH_HOST: ${{ secrets.FRONTEND_DOCKER_HOST }}
+          SSH_PORT: ${{ secrets.FRONTEND_DOCKER_PORT || '22' }}
+        run: |
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> "$HOME/.ssh/known_hosts"
+          chmod 644 "$HOME/.ssh/known_hosts"
+
+      - name: Copy frontend tar to remote machine
+        env:
+          SSHPASS: ${{ secrets.FRONTEND_DOCKER_PASSWORD }}
+          SSH_HOST: ${{ secrets.FRONTEND_DOCKER_HOST }}
+          SSH_PORT: ${{ secrets.FRONTEND_DOCKER_PORT || '22' }}
+          SSH_USER: ${{ secrets.FRONTEND_DOCKER_USER }}
+          REMOTE_DIR: ${{ secrets.FRONTEND_DOCKER_TARGET_DIR }}
+        run: |
+          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=yes "$SSH_USER@$SSH_HOST" "mkdir -p \"$REMOTE_DIR\""
+          sshpass -e scp -P "$SSH_PORT" -o StrictHostKeyChecking=yes "$TAR_NAME" "$SSH_USER@$SSH_HOST:$REMOTE_DIR/$TAR_NAME"
+
+      - name: Run remote deploy script
+        env:
+          SSHPASS: ${{ secrets.FRONTEND_DOCKER_PASSWORD }}
+          SSH_HOST: ${{ secrets.FRONTEND_DOCKER_HOST }}
+          SSH_PORT: ${{ secrets.FRONTEND_DOCKER_PORT || '22' }}
+          SSH_USER: ${{ secrets.FRONTEND_DOCKER_USER }}
+          REMOTE_DIR: ${{ secrets.FRONTEND_DOCKER_TARGET_DIR }}
+          REMOTE_SCRIPT: ${{ secrets.FRONTEND_DOCKER_DEPLOY_SCRIPT }}
+        run: |
+          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=yes "$SSH_USER@$SSH_HOST" "bash \"$REMOTE_SCRIPT\" \"$REMOTE_DIR/$TAR_NAME\""
