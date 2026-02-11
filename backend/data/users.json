@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "username": "123",
+    "password_hash": "scrypt:32768:8:1$afYdUY6pfwfHX2Jg$3842ed70abf08b2778de81f47ac5b70732b831145919e5db68f65c2c9bcfd67b35a7df6f72d1f1127c082f4b25566d23334344bcf5c8ffd12477ee2dd60fbc0c",
+    "created_at": "2026-02-11T19:40:28.346015",
+    "updated_at": "2026-02-11T19:40:28.346015"
+  },
+  {
+    "id": 2,
+    "username": "1234",
+    "password_hash": "scrypt:32768:8:1$7Hzn6RyFch1o9rdt$ce4bb4de6b1abb8d95848ab44262f91deb6984acc96bf634aa4103ed4cddc733ff62b2976aaffaa0ec1a9f48cf5021b6b8ca515e8a7967c228e0f5c776389913",
+    "created_at": "2026-02-11T19:41:45.434510",
+    "updated_at": "2026-02-11T19:41:45.434510"
+  }
+]

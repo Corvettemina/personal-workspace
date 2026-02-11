@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bingo-frontend
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+    networks:
+      - bingo-network
+
+networks:
+  bingo-network:
+    driver: bridge

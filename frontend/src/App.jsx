@@ -6,10 +6,11 @@ import {
   logoutUser,
   registerUser,
   resetBoard,
+  regenerateBoard,
   saveBoard,
 } from "./storage";
 
-const EMPTY_FORM = { username: "", password: "" };
+const EMPTY_FORM = { username: "", password: "", confirmPassword: "" };
 
 function checkBingo(cells) {
   if (!cells || cells.length !== 25) {
@@ -65,6 +66,12 @@ function App() {
     }
   }, []);
 
+  // Reset form when switching between login/register
+  useEffect(() => {
+    setForm(EMPTY_FORM);
+    setError("");
+  }, [mode]);
+
   const markedCount = useMemo(() => {
     if (!board) {
       return 0;
@@ -94,6 +101,10 @@ function App() {
       if (mode === "login") {
         await loginUser(form.username, form.password);
       } else {
+        // Validate password match for registration
+        if (form.password !== form.confirmPassword) {
+          throw new Error("Passwords do not match.");
+        }
         await registerUser(form.username, form.password);
       }
       const current = getCurrentUser();
@@ -149,6 +160,37 @@ function App() {
     }
     const next = resetBoard(user);
     setBoard(next);
+  };
+
+  const handleRegenerate = () => {
+    console.log("handleRegenerate called, user:", user);
+    if (!user) {
+      console.error("No user found");
+      return;
+    }
+    const confirmed = window.confirm(
+      "Generate a new board with new words? This will reset all your marks."
+    );
+    if (!confirmed) {
+      console.log("User cancelled regeneration");
+      return;
+    }
+    try {
+      console.log("Calling regenerateBoard...");
+      const next = regenerateBoard(user);
+      console.log("Board regenerated:", next);
+      console.log("Setting board state...");
+      setBoard(next);
+      setError(""); // Clear any previous errors
+      // Force a small delay to ensure state update
+      setTimeout(() => {
+        console.log("State should be updated now");
+      }, 100);
+    } catch (error) {
+      console.error("Error regenerating board:", error);
+      setError(error.message || "Failed to generate new board");
+      alert(`Error: ${error.message}`);
+    }
   };
 
   return (
@@ -209,13 +251,28 @@ function App() {
                   required
                 />
               </label>
+              {mode === "register" && (
+                <label>
+                  Confirm Password
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={form.confirmPassword}
+                    onChange={handleInputChange}
+                    minLength={6}
+                    required
+                  />
+                </label>
+              )}
               {error ? <p className="error">{error}</p> : null}
               <button className="primary" type="submit" disabled={loading}>
                 {loading ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}
               </button>
             </form>
             <p className="hint">
-              Demo only: data is stored in your browser and never leaves your device.
+              {mode === "login"
+                ? "Sign in to access your account."
+                : "Create an account to get started. Your data is securely stored."}
             </p>
           </section>
         ) : (
@@ -228,6 +285,9 @@ function App() {
               <div className="board-actions">
                 <button className="secondary" type="button" onClick={handleReset}>
                   Reset marks
+                </button>
+                <button className="secondary" type="button" onClick={handleRegenerate}>
+                  New board
                 </button>
               </div>
             </div>
@@ -261,9 +321,8 @@ function App() {
                     <button
                       key={`${cell.text}-${index}`}
                       type="button"
-                      className={`cell ${cell.marked ? "marked" : ""} ${
-                        index === 12 ? "free" : ""
-                      }`}
+                      className={`cell ${cell.marked ? "marked" : ""} ${index === 12 ? "free" : ""
+                        }`}
                       onClick={() => handleToggle(index)}
                     >
                       <span>{cell.text}</span>
