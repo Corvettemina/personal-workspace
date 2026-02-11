@@ -2,6 +2,8 @@ name: Frontend Docker Build and Remote Deploy
 
 on:
   push:
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
