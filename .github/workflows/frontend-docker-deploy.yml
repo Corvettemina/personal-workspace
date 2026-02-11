@@ -40,18 +40,7 @@ jobs:
           ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> "$HOME/.ssh/known_hosts"
           chmod 644 "$HOME/.ssh/known_hosts"
 
-      - name: Copy frontend tar to remote machine
-        env:
-          SSHPASS: ${{ secrets.FRONTEND_DOCKER_PASSWORD }}
-          SSH_HOST: ${{ secrets.FRONTEND_DOCKER_HOST }}
-          SSH_PORT: ${{ secrets.FRONTEND_DOCKER_PORT || '22' }}
-          SSH_USER: ${{ secrets.FRONTEND_DOCKER_USER }}
-          REMOTE_DIR: ${{ secrets.FRONTEND_DOCKER_TARGET_DIR }}
-        run: |
-          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=yes "$SSH_USER@$SSH_HOST" "mkdir -p \"$REMOTE_DIR\""
-          sshpass -e scp -P "$SSH_PORT" -o StrictHostKeyChecking=yes "$TAR_NAME" "$SSH_USER@$SSH_HOST:$REMOTE_DIR/$TAR_NAME"
-
-      - name: Run remote deploy script
+      - name: Copy frontend tar and run remote deploy script
         env:
           SSHPASS: ${{ secrets.FRONTEND_DOCKER_PASSWORD }}
           SSH_HOST: ${{ secrets.FRONTEND_DOCKER_HOST }}
@@ -60,4 +49,7 @@ jobs:
           REMOTE_DIR: ${{ secrets.FRONTEND_DOCKER_TARGET_DIR }}
           REMOTE_SCRIPT: ${{ secrets.FRONTEND_DOCKER_DEPLOY_SCRIPT }}
         run: |
+          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=yes "$SSH_USER@$SSH_HOST" "mkdir -p \"$REMOTE_DIR\""
+          sshpass -e scp -P "$SSH_PORT" -o StrictHostKeyChecking=yes "$TAR_NAME" "$SSH_USER@$SSH_HOST:$REMOTE_DIR/$TAR_NAME"
+          sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=yes "$SSH_USER@$SSH_HOST" "test -f \"$REMOTE_DIR/$TAR_NAME\""
           sshpass -e ssh -p "$SSH_PORT" -o StrictHostKeyChecking=yes "$SSH_USER@$SSH_HOST" "bash \"$REMOTE_SCRIPT\" \"$REMOTE_DIR/$TAR_NAME\""
