@@ -186,6 +186,7 @@ const BINGO_WORDS = [
   "Someone orders way too much food",
   "Someone falls down stairs",
   "Someone gets locked out of room",
+  "arguing about wbos driving"
 ];
 
 function hashStringToSeed(value) {
